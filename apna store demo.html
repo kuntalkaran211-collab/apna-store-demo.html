@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apna Store - Premium Products, Best Deals</title>
+    <style>
+        /* --- General Styles --- */
+        :root {
+            --primary-color: #007bff; --dark-color: #343a40; --light-color: #ffffff;
+            --success-color: #28a745; --text-color: #495057; --border-color: #dee2e6;
+        }
+        html { scroll-behavior: smooth; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f1f3f5; color: var(--text-color); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        section { padding: 60px 20px; }
+        h1, h2 { text-align: center; color: var(--dark-color); margin-bottom: 40px; }
+
+        /* --- Header --- */
+        .header { background-color: var(--light-color); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
+        .logo { font-size: 1.8em; font-weight: bold; color: var(--primary-color); text-decoration: none; }
+        .nav a { margin-left: 25px; text-decoration: none; color: var(--dark-color); font-weight: 500; transition: color 0.3s; }
+        .nav a:hover { color: var(--primary-color); }
+
+        /* --- Loader / Spinner --- */
+        .loader-container { display: flex; justify-content: center; align-items: center; min-height: 300px; }
+        .loader { border: 6px solid #f3f3f3; border-radius: 50%; border-top: 6px solid var(--primary-color); width: 50px; height: 50px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* --- Product Grid --- */
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 25px; }
+        .product-card { visibility: hidden; opacity: 0; transform: translateY(20px); transition: all 0.4s ease-out; background-color: var(--light-color); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.08); cursor: pointer; display: flex; flex-direction: column; }
+        .product-card.visible { visibility: visible; opacity: 1; transform: translateY(0); }
+        .product-card:hover { transform: translateY(-8px); box-shadow: 0 12px 20px rgba(0,0,0,0.12); }
+        .product-image { width: 100%; height: 220px; object-fit: cover; }
+        .product-info { padding: 15px; flex-grow: 1; }
+        .product-name { font-size: 1.1em; font-weight: 600; color: var(--dark-color); margin: 0 0 10px 0; height: 48px; overflow: hidden; }
+        .product-pricing { display: flex; align-items: center; gap: 10px; }
+        .current-price { font-size: 1.4em; font-weight: bold; color: var(--dark-color); }
+        .original-price { text-decoration: line-through; color: #868e96; }
+        .discount-badge { background-color: var(--success-color); color: var(--light-color); padding: 3px 8px; border-radius: 5px; font-size: 0.8em; font-weight: bold; }
+        
+        /* --- Text Sections & Footer --- */
+        .text-section { background-color: var(--light-color); border-radius: 8px; max-width: 800px; margin: 0 auto; text-align: center; line-height: 1.6; padding: 30px; }
+        .footer { background-color: var(--dark-color); color: #f8f9fa; text-align: center; padding: 20px; margin-top: 40px; }
+        .footer-links a { color: var(--light-color); text-decoration: none; margin: 0 10px; }
+
+        /* --- Product Modal --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 2000; padding: 20px; box-sizing: border-box; }
+        .modal-content { background-color: var(--light-color); border-radius: 15px; padding: 30px; max-width: 900px; width: 100%; display: grid; grid-template-columns: 2fr 3fr; gap: 30px; position: relative; max-height: 90vh; overflow-y: auto; }
+        .modal-close { position: absolute; top: 15px; right: 20px; font-size: 2.5em; color: #aaa; cursor: pointer; line-height: 1; }
+        .modal-image-container { text-align: center; }
+        .modal-main-image { max-width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--border-color); }
+        .modal-details h2 { text-align: left; margin-top: 0; margin-bottom: 15px; font-size: 1.8em;}
+        .modal-details .product-pricing { margin-bottom: 20px; justify-content: flex-start; }
+        .modal-tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; }
+        .tab-button { background: none; border: none; padding: 10px 15px; cursor: pointer; font-size: 1em; }
+        .tab-button.active { color: var(--primary-color); border-bottom: 3px solid var(--primary-color); font-weight: 600; }
+        .tab-content { display: none; line-height: 1.6; font-size: 0.95em; }
+        .tab-content.active { display: block; }
+        #specsContent ul { padding-left: 20px; margin: 0; }
+        .review { border-bottom: 1px solid #eee; padding: 10px 0; }
+        .review-author { font-weight: bold; }
+        .review-rating { color: #f0ad4e; }
+        .buy-button { display: block; width: 100%; padding: 14px; background-color: var(--primary-color); color: var(--light-color); border: none; border-radius: 8px; font-size: 1.1em; font-weight: bold; cursor: pointer; transition: background-color 0.3s; margin-top: 20px; }
+
+        @media (max-width: 768px) {
+            .modal-content { grid-template-columns: 1fr; }
+            .nav { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <a href="#" class="logo">Apna Store</a>
+        <nav class="nav">
+            <a href="#">Home</a><a href="#products">Products</a><a href="#about">About Us</a><a href="#contact">Contact</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="products">
+            <div class="container">
+                <h1>Our Featured Products</h1>
+                <div id="product-grid" class="product-grid">
+                    <div class="loader-container">
+                        <div class="loader"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section id="about" style="background-color: #e9ecef;"><div class="container text-section"><h2>About Us</h2><p>Welcome to Apna Store, your one-stop shop for the best products online. We are dedicated to providing you with high-quality items at unbeatable prices. Our mission is to make online shopping easy, reliable, and enjoyable for everyone.</p></div></section>
+        <section id="contact"><div class="container text-section"><h2>Contact Us</h2><p>Have any questions? We'd love to hear from you. Reach out to our customer support team.</p><p><strong>Email:</strong> support@apnastore.com<br><strong>Phone:</strong> +91 98765 43210</p><p><em>(Please note: The contact information is for demonstration purposes.)</em></p></div></section>
+    </main>
+    
+    <footer class="footer"><div class="footer-links"><a href="#about">About</a> | <a href="#contact">Contact</a> | <a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a></div><p>&copy; 2024 Apna Store. All Rights Reserved.</p></footer>
+    <div id="productModal" class="modal-overlay" onclick="closeModalOutside(event)"></div>
+
+    <script>
+    // Data source for products. In a real app, this would come from a server.
+    const productDatabase = [
+        { id: 1, name: "Premium Smartphone X", image: "https://images.pexels.com/photos/699122/pexels-photo-699122.jpeg?auto=compress&cs=tinysrgb&w=600", originalPrice: 79999, currentPrice: 69999, description: "Experience the next generation of mobile technology with a stunning display and a powerful processor.", specifications: "<ul><li>Display: 6.7-inch OLED</li><li>Processor: Snapdragon 8 Gen 2</li><li>RAM: 12GB</li><li>Camera: 108MP Quad Camera</li></ul>", reviews: [{author: "Rohan S.", rating: 5, text: "Amazing phone!"},{author: "Priya M.", rating: 4, text: "Great performance."}] },
+        { id: 2, name: "Ultra-Slim Laptop Pro", image: "https://images.pexels.com/photos/18105/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=600", originalPrice: 95000, currentPrice: 82500, description: "A sleek, powerful laptop for professionals on the go. Lightweight design with heavyweight performance.", specifications: "<ul><li>Display: 14-inch QHD</li><li>Processor: Intel Core i7</li><li>RAM: 16GB</li><li>Storage: 1TB NVMe SSD</li></ul>", reviews: [{author: "Amit K.", rating: 5, text: "Perfect for my work. Fast and light."}] },
+        { id: 3, name: "Noise-Cancelling Headphones", image: "https://images.pexels.com/photos/3945683/pexels-photo-3945683.jpeg?auto=compress&cs=tinysrgb&w=600", originalPrice: 22990, currentPrice: 19990, description: "Immerse yourself in music with industry-leading noise cancellation and all-day comfort.", specifications: "<ul><li>Connectivity: Bluetooth 5.2</li><li>Battery Life: 30 Hours</li><li>Features: Active Noise Cancellation</li></ul>", reviews: [{author: "Sneha G.", rating: 5, text: "Best headphones I've ever owned."}] },
+        { id: 4, name: "Fitness Tracker Smartwatch", image: "https://images.pexels.com/photos/437037/pexels-photo-437037.jpeg?auto=compress&cs=tinysrgb&w=600", originalPrice: 15999, currentPrice: 12499, description: "Track your fitness goals and stay connected. Features heart rate monitoring, GPS, and a vibrant AMOLED display.", specifications: "<ul><li>Display: 1.4-inch AMOLED</li><li>Sensors: Heart Rate, SpO2, GPS</li><li>Water Resistance: 5ATM</li></ul>", reviews: [{author: "Vikram P.", rating: 4, text: "Accurate tracking and looks great."}] },
+        { id: 5, name: "Men's Classic Leather Jacket", image: "https://images.pexels.com/photos/1124465/pexels-photo-1124465.jpeg?auto=compress&cs=tinysrgb&w=600", originalPrice: 8999, currentPrice: 4499, description: "A timeless leather jacket made from 100% genuine leather. Perfect for all seasons and occasions.", specifications: "<ul><li>Material: Genuine Sheep Leather</li><li>Lining: Satin</li><li>Fit: Regular Fit</li></ul>", reviews: [{author: "Arjun R.", rating: 5, text: "Excellent quality and perfect fit."}] },
+        { id: 6, name: "Comfort Running Shoes", image: "https://images.pexels.com/photos/2529148/pexels-photo-2529148.jpeg?auto=compress&cs=tinysrgb&w=600", originalPrice: 4999, currentPrice: 2999, description: "Lightweight and breathable running shoes with superior cushioning for maximum comfort during your runs.", specifications: "<ul><li>Upper Material: Mesh</li><li>Sole: Rubber</li><li>Best for: Road Running</li></ul>", reviews: [{author: "Nisha D.", rating: 5, text: "Very comfortable."}] },
+        { id: 7, name: "Modern Ergonomic Office Chair", image: "https://images.pexels.com/photos/3757139/pexels-photo-3757139.jpeg?auto=compress&cs=tinysrgb&w=600", originalPrice: 18000, currentPrice: 14500, description: "Work comfortably for hours with this chair featuring adjustable lumbar support and breathable mesh back.", specifications: "<ul><li>Material: Breathable Mesh</li><li>Support: Adjustable Lumbar</li><li>Weight Capacity: 120kg</li></ul>", reviews: [{author: "Karan T.", rating: 5, text: "My back pain is gone!"}] },
+        { id: 8, name: "Portable Bluetooth Speaker", image: "https://images.pexels.com/photos/1279923/pexels-photo-1279923.jpeg?auto=compress&cs=tinysrgb&w=600", originalPrice: 3999, currentPrice: 2499, description: "Compact speaker with powerful sound and deep bass. Waterproof and perfect for outdoor adventures.", specifications: "<ul><li>Sound: 360-degree surround</li><li>Battery Life: 15 Hours</li><li>Waterproof: IPX7 Rating</li></ul>", reviews: [{author: "Meera J.", rating: 4, text: "Great sound for its size."}] }
+    ];
+
+    // This function simulates fetching data from an API.
+    function fetchProducts() {
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve(productDatabase);
+            }, 1500); // 1.5 second delay to mimic network latency
+        });
+    }
+
+    const formatPrice = (price) => `₹${price.toLocaleString('en-IN')}`;
+    const calculateDiscount = (orig, curr) => Math.round(((orig - curr) / orig) * 100);
+
+    function renderProducts(products) {
+        const productGrid = document.getElementById('product-grid');
+        productGrid.innerHTML = products.map(product => `
+            <div class="product-card" onclick="openModal(${product.id})">
+                <img src="${product.image}" alt="${product.name}" class="product-image">
+                <div class="product-info">
+                    <h3 class="product-name">${product.name}</h3>
+                    <div class="product-pricing">
+                        <span class="current-price">${formatPrice(product.currentPrice)}</span>
+                        <span class="original-price">${formatPrice(product.originalPrice)}</span>
+                        <span class="discount-badge">${calculateDiscount(product.originalPrice, product.currentPrice)}% OFF</span>
+                    </div>
+                </div>
+            </div>`).join('');
+        setTimeout(() => document.querySelectorAll('.product-card').forEach(card => card.classList.add('visible')), 100);
+    }
+    
+    const modal = document.getElementById('productModal');
+    function openModal(productId) {
+        const product = productDatabase.find(p => p.id === productId);
+        if (!product) return;
+        modal.innerHTML = `<div class="modal-content"> <span class="modal-close" onclick="closeModal()">&times;</span> <div class="modal-image-container"> <img src="${product.image}" alt="${product.name}" class="modal-main-image"> </div><div class="modal-details"> <h2>${product.name}</h2> <div class="product-pricing"> <span class="current-price">${formatPrice(product.currentPrice)}</span> <span class="original-price">${formatPrice(product.originalPrice)}</span> <span class="discount-badge">${calculateDiscount(product.originalPrice, product.currentPrice)}% OFF</span> </div><div class="modal-tabs"> <button class="tab-button active" onclick="showTab('description', this)">Description</button> <button class="tab-button" onclick="showTab('specs', this)">Specifications</button> <button class="tab-button" onclick="showTab('reviews', this)">Reviews</button> </div><div id="descriptionContent" class="tab-content active"><p>${product.description}</p></div><div id="specsContent" class="tab-content">${product.specifications}</div><div id="reviewsContent" class="tab-content">${product.reviews.map(r => `<div class="review"><p class="review-author">${r.author} <span class="review-rating">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span></p><p>${r.text}</p></div>`).join('')}</div><button class="buy-button" onclick="showPaymentMessage()">Buy Now</button> </div></div>`;
+        modal.style.display = 'flex';
+    }
+
+    function closeModal() { modal.style.display = 'none'; }
+    function closeModalOutside(event) { if (event.target === modal) closeModal(); }
+    
+    function showTab(tabName, buttonElement) {
+        const parent = buttonElement.closest('.modal-details');
+        parent.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        parent.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+        parent.querySelector('#' + tabName + 'Content').classList.add('active');
+        buttonElement.classList.add('active');
+    }
+
+    function showPaymentMessage() {
+        alert('Payment Gateway is not integrated yet. This page has been created to apply for a payment gateway.');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchProducts().then(products => {
+            renderProducts(products);
+        });
+    });
+    </script>
+</body>
+</html>
